@@ -16,6 +16,8 @@ import BHWReferrals from './pages/bhw/Referrals';
 import BHWPatientRecord from './pages/bhw/PatientRecord';
 import BHWReferPatient from './pages/bhw/ReferPatient';
 import BHWSettings from './pages/bhw/Settings';
+import Notifications from './pages/common/Notifications';
+
 
 function App() {
   return (
@@ -31,8 +33,9 @@ function App() {
           <Route path="patients" element={<AdminPatients />} />
           <Route path="patients/:id" element={<AdminPatientRecord />} />
           <Route path="users" element={<UserManagement />} />
-          <Route path="notifications" element={<div className="p-4"><h1 className="text-3xl font-bold">Notifications</h1></div>} />
+          <Route path="notifications" element={<Notifications />} />
           <Route path="settings" element={<AdminSettings />} />
+
         </Route>
 
         {/* BHW Portal */}
@@ -43,7 +46,9 @@ function App() {
           <Route path="patients/:id" element={<BHWPatientRecord />} />
           <Route path="patients/:id/refer" element={<BHWReferPatient />} />
           <Route path="referrals" element={<BHWReferrals />} />
+          <Route path="notifications" element={<Notifications />} />
           <Route path="settings" element={<BHWSettings />} />
+
         </Route>
       </Routes>
     </Router>
