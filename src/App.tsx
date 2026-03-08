@@ -9,6 +9,7 @@ import AdminReferrals from './pages/admin/Referrals';
 import AdminPatientRecord from './pages/admin/PatientRecord';
 import UserManagement from './pages/admin/UserManagement';
 import AdminSettings from './pages/admin/Settings';
+import AdminSmsLogs from './pages/admin/SmsLogs';
 
 // BHW Pages
 import BHWDashboard from './pages/bhw/Dashboard';
@@ -82,6 +83,7 @@ function App() {
             <Route path="patients/:id" element={<AdminPatientRecord />} />
             <Route path="users" element={<UserManagement />} />
             <Route path="notifications" element={<Notifications />} />
+            <Route path="sms-logs" element={<AdminSmsLogs />} />
             <Route path="settings" element={<AdminSettings />} />
           </Route>
 

@@ -26,3 +26,10 @@ dist-ssr
 # Temp/debug files
 tmp/
 tmp_*
+temp/
+.temp/
+
+# Environment
+.env
+.env.*
+!.env.example

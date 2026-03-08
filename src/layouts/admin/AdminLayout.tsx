@@ -7,7 +7,8 @@ import {
     Bell,
     Settings,
     LogOut,
-    Shield
+    Shield,
+    MessageSquare
 } from 'lucide-react';
 
 import { useNotification } from '../../contexts/NotificationContext';
@@ -34,6 +35,7 @@ const Sidebar = () => {
             ),
             label: 'Notifications'
         },
+        { path: '/admin/sms-logs', icon: <MessageSquare size={20} />, label: 'SMS Logs' },
         { path: '/admin/settings', icon: <Settings size={20} />, label: 'Settings' },
     ];
 
