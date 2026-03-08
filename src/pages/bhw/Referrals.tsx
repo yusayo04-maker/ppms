@@ -82,18 +82,43 @@ const BHWReferrals = () => {
     const [loading, setLoading] = useState(true);
     const [globalFilter, setGlobalFilter] = useState('');
     const [sorting, setSorting] = useState<SortingState>([]);
+    const [bhwBarangay, setBhwBarangay] = useState<string | null>(null);
+
+    // Fetch BHW's barangay on component mount
+    useEffect(() => {
+        const fetchBHWProfile = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data: profile, error } = await supabase
+                    .from('profiles')
+                    .select('barangay')
+                    .eq('id', user.id)
+                    .single();
+
+                if (error) {
+                    console.error('Error fetching BHW profile:', error);
+                } else if (profile) {
+                    setBhwBarangay(profile.barangay);
+                }
+            }
+        };
+        fetchBHWProfile();
+    }, []);
 
     const fetchReferrals = useCallback(async () => {
+        if (!bhwBarangay) return;
+
         setLoading(true);
         try {
             const { data: referrals, error } = await supabase
                 .from('referrals')
                 .select(`
                     *,
-                    pregnancy_cycle:pregnancy_cycles(
-                        patient:patients(first_name, last_name, age)
+                    pregnancy_cycle:pregnancy_cycles!inner(
+                        patient:patients!inner(first_name, last_name, age, barangay)
                     )
                 `)
+                .eq('pregnancy_cycle.patient.barangay', bhwBarangay)
                 .order('referred_at', { ascending: false });
 
             if (error) throw error;
@@ -103,7 +128,7 @@ const BHWReferrals = () => {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [bhwBarangay]);
 
     useEffect(() => {
         fetchReferrals();

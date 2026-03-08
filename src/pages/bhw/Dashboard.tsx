@@ -15,18 +15,47 @@ const BHWDashboard = () => {
         const fetchDashboardData = async () => {
             setLoading(true);
             try {
-                // Fetch counts - RLS will handle filtering by barangay/user
+                // 1. Get current user and their assigned barangay
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) return;
+
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('barangay')
+                    .eq('id', user.id)
+                    .single();
+
+                const bhwBarangay = profile?.barangay;
+                if (!bhwBarangay) return;
+
+                // 2. Fetch counts and notes filtered by barangay
                 const [
                     { count: patientCount },
                     { count: referralCount },
                     { count: labCount },
                     { data: notes }
                 ] = await Promise.all([
-                    supabase.from('patients').select('*', { count: 'exact', head: true }),
-                    supabase.from('referrals').select('*', { count: 'exact', head: true }).eq('status', 'Pending'),
-                    supabase.from('laboratories').select('*', { count: 'exact', head: true }).eq('status', 'Pending'),
+                    // Only my barangay patients
+                    supabase.from('patients')
+                        .select('*', { count: 'exact', head: true })
+                        .eq('barangay', bhwBarangay),
+
+                    // Referrals for patients in my barangay
+                    supabase.from('referrals')
+                        .select('*, cycle:pregnancy_cycles!inner(patient:patients!inner(barangay))', { count: 'exact', head: true })
+                        .eq('status', 'Pending')
+                        .eq('cycle.patient.barangay', bhwBarangay),
+
+                    // Laboratories for patients in my barangay
+                    supabase.from('laboratories')
+                        .select('*, cycle:pregnancy_cycles!inner(patient:patients!inner(barangay))', { count: 'exact', head: true })
+                        .eq('status', 'Pending')
+                        .eq('cycle.patient.barangay', bhwBarangay),
+
+                    // Notes for patients in my barangay
                     supabase.from('notes')
-                        .select('*, patient:patients(first_name, last_name)')
+                        .select('*, cycle:pregnancy_cycles!inner(patient:patients!inner(first_name, last_name, barangay))')
+                        .eq('cycle.patient.barangay', bhwBarangay)
                         .order('created_at', { ascending: false })
                         .limit(5)
                 ]);
@@ -36,7 +65,13 @@ const BHWDashboard = () => {
                     newReferrals: referralCount || 0,
                     pendingLabs: labCount || 0
                 });
-                setRecentNotes(notes || []);
+
+                // Format notes to match previous structure
+                const formattedNotes = (notes || []).map(n => ({
+                    ...n,
+                    patient: n.cycle?.patient
+                }));
+                setRecentNotes(formattedNotes);
             } catch (err) {
                 console.error('Error fetching BHW dashboard data:', err);
             } finally {
