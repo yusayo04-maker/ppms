@@ -4,8 +4,10 @@ A comprehensive management system designed for Barangay Health Workers (BHW) and
 
 ## Features
 
-- **Admin Portal**: Dashboard, patient management, referral tracking, user management, and settings.
-- **BHW Portal**: Patient registration, maternal care tracking, referrals, and patient records.
+- **Admin Portal**: Performance dashboard, patient management, referral tracking, user management, and settings.
+- **BHW Portal**: Patient registration, maternal care tracking, referrals, and patient records with interactive charts.
+- **Referral Line Chart**: Monthly visualization of referral trends filtered by barangay.
+- **Secure Password Reset**: Full recovery flow for MHO Admins and manual reset authority for BHW accounts.
 - **Maternal Care Milestones**: Track progress and findings throughout the pregnancy.
 - **Referral System**: Seamless transfer of findings and patient data between BHWs and Administrators.
 
@@ -13,9 +15,10 @@ A comprehensive management system designed for Barangay Health Workers (BHW) and
 
 - **Frontend**: React 19, TypeScript, Vite
 - **Styling**: Tailwind CSS 4
-- **Backend & Database**: Supabase (PostgreSQL)
+- **Backend & Database**: Supabase (Postgres)
 - **Routing**: React Router 7
 - **UI Components**: Lucide React (Icons), TanStack Table
+- **Charts**: Recharts
 
 ## Key Dependencies
 
@@ -24,6 +27,7 @@ A comprehensive management system designed for Barangay Health Workers (BHW) and
 - `react-router-dom`: Client-side routing
 - `@supabase/supabase-js`: Database and authentication client
 - `@tanstack/react-table`: Powerful data table management
+- `recharts`: Composable charting library
 - `lucide-react`: Icon set
 
 ### Styling & Build
