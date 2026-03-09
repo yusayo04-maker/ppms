@@ -52,7 +52,7 @@ serve(async (req: Request) => {
       const patient = lab.cycle?.patient
       if (!patient?.contact_no) continue
 
-      const message = `Reminder: Hi ${patient.first_name}, you have a scheduled laboratory test (${lab.test_name}) on ${targetDateStr}. Please prepare accordingly.`
+      const message = `Good day Mrs. ${patient.first_name}. This is a reminder that the deadline for submitting your laboratory result for ${lab.test_name} is on ${targetDateStr}. Please ensure your results are submitted on or before the stated date. Your health and your baby's well-being matter—regular maternal care leads to a safer pregnancy.`
 
       const res = await sendSMS(patient.contact_no, message, patient.id, 'lab_test')
       results.push(res)
@@ -63,7 +63,7 @@ serve(async (req: Request) => {
       const patient = milestone.cycle?.patient
       if (!patient?.contact_no) continue
 
-      const message = `Reminder: Hi ${patient.first_name}, you have a maternal checkup (${milestone.title}) scheduled on ${targetDateStr}. See you at the health office!`
+      const message = `Good day Mrs. ${patient.first_name}. This is a reminder that your maternal checkup for ${milestone.title} is scheduled on ${targetDateStr}. Please proceed to the Valladolid Municipal Health Office on your scheduled date. Regular prenatal visits help ensure a healthy mother and baby.`
 
       const res = await sendSMS(patient.contact_no, message, patient.id, 'maternal_checkup')
       results.push(res)

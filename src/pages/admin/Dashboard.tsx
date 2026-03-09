@@ -202,6 +202,7 @@ const Dashboard = () => {
                                         axisLine={false}
                                         tickLine={false}
                                         tick={{ fill: '#64748b', fontSize: 10, fontWeight: 700 }}
+                                        allowDecimals={false}
                                     />
                                     <Tooltip
                                         cursor={{ fill: '#f8fafc' }}
