@@ -54,6 +54,7 @@ const UserManagement = () => {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showResetModal, setShowResetModal] = useState(false);
     const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
     const [showActionMenu, setShowActionMenu] = useState<string | null>(null);
 
@@ -64,6 +65,7 @@ const UserManagement = () => {
         barangay: BARANGAYS[0],
     });
     const [editingUser, setEditingUser] = useState<Partial<Profile>>({});
+    const [resetPassword, setResetPassword] = useState('');
 
     const fetchUsers = useCallback(async () => {
         setLoading(true);
@@ -194,9 +196,13 @@ const UserManagement = () => {
                                 <button
                                     onClick={() => {
                                         setSelectedUser(info.row.original);
-                                        // Password change requires user to be logged in usually, 
-                                        // or Admin API which we don't have here.
-                                        alert("Password management for other users requires administrative access to the Supabase Auth dashboard.");
+                                        if (info.row.original.role === 'bhw') {
+                                            setShowResetModal(true);
+                                        } else {
+                                            if (window.confirm(`Send password reset link to ${info.row.original.email}?`)) {
+                                                handleResetAdminPassword(info.row.original.id);
+                                            }
+                                        }
                                         setShowActionMenu(null);
                                     }}
                                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
@@ -333,6 +339,50 @@ const UserManagement = () => {
         } catch (err: any) {
             console.error('Account deletion error:', err);
             alert(`Failed to delete profile: ${err.message}`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleResetAdminPassword = async (userId: string) => {
+        setLoading(true);
+        try {
+            const { data, error } = await supabase.functions.invoke('manage-users', {
+                body: { action: 'reset-password-mho', userId }
+            });
+
+            if (error || data.error) throw error || new Error(data.error);
+
+            alert("Password reset email sent successfully.");
+        } catch (err: any) {
+            console.error('Password reset error:', err);
+            alert(`Failed to send reset email: ${err.message}`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleConfirmResetBHW = async () => {
+        if (!selectedUser || !resetPassword) return;
+        setLoading(true);
+        try {
+            const { data, error } = await supabase.functions.invoke('manage-users', {
+                body: {
+                    action: 'reset-password-bhw',
+                    userId: selectedUser.id,
+                    newPassword: resetPassword
+                }
+            });
+
+            if (error || data.error) throw error || new Error(data.error);
+
+            setShowResetModal(false);
+            setResetPassword('');
+            setSelectedUser(null);
+            alert("Password updated successfully.");
+        } catch (err: any) {
+            console.error('Password reset error:', err);
+            alert(`Failed to update password: ${err.message}`);
         } finally {
             setLoading(false);
         }
@@ -669,6 +719,55 @@ const UserManagement = () => {
                                     className="w-full py-3 bg-gray-100 text-gray-600 rounded-lg font-black hover:bg-gray-200 transition-all uppercase tracking-wider text-xs"
                                 >
                                     Keep Account
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Reset Password Modal (BHW Only) */}
+            {showResetModal && selectedUser && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+                    onClick={() => { setShowResetModal(false); setSelectedUser(null); setResetPassword(''); }}
+                >
+                    <div
+                        className="bg-white rounded-xl shadow-2xl w-full max-sm:w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="bg-blue-600 p-6 text-white flex justify-between items-center">
+                            <h3 className="text-xl font-bold flex items-center">
+                                <Key className="mr-2" />
+                                Reset Password
+                            </h3>
+                            <button onClick={() => { setShowResetModal(false); setSelectedUser(null); setResetPassword(''); }} className="hover:bg-blue-700 p-1 rounded-full transition-colors">
+                                <X size={24} />
+                            </button>
+                        </div>
+                        <div className="p-8 space-y-4">
+                            <p className="text-sm text-gray-500">
+                                Enter a new password for <strong className="text-gray-900">{selectedUser.full_name}</strong>.
+                            </p>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                                <input
+                                    type="password"
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                                    placeholder="Enter new password"
+                                    value={resetPassword}
+                                    onChange={(e) => setResetPassword(e.target.value)}
+                                    autoFocus
+                                />
+                            </div>
+                            <div className="pt-2">
+                                <button
+                                    onClick={handleConfirmResetBHW}
+                                    disabled={loading || !resetPassword}
+                                    className="w-full py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-all shadow-md flex items-center justify-center disabled:opacity-50"
+                                >
+                                    {loading ? <Loader2 className="animate-spin mr-2" size={18} /> : <Save size={18} className="mr-2" />}
+                                    Update Password
                                 </button>
                             </div>
                         </div>

@@ -21,6 +21,7 @@ import BHWReferPatient from './pages/bhw/ReferPatient';
 import BHWSettings from './pages/bhw/Settings';
 import Notifications from './pages/common/Notifications';
 import Login from './pages/Login';
+import ResetPassword from './pages/ResetPassword';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRole }: { children: React.ReactNode, allowedRole: 'mho_admin' | 'bhw' }) => {
@@ -67,6 +68,7 @@ function App() {
       <Router>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
           {/* Redirect root to login */}
           <Route path="/" element={<Navigate to="/login" replace />} />
