@@ -29,7 +29,18 @@ const Login = () => {
         const checkUser = async () => {
             const { data: { session } } = await supabase.auth.getSession();
             if (session) {
-                const role = session.user.user_metadata?.role;
+                let role = session.user.user_metadata?.role;
+
+                // Fallback to database if metadata is missing
+                if (!role) {
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('role')
+                        .eq('id', session.user.id)
+                        .single();
+                    role = profile?.role;
+                }
+
                 if (role === 'mho_admin') navigate('/admin');
                 else if (role === 'bhw') navigate('/bhw');
             }
@@ -54,7 +65,18 @@ const Login = () => {
             if (authError) throw authError;
 
             if (data.user) {
-                const role = data.user.user_metadata?.role;
+                let role = data.user.user_metadata?.role;
+
+                // Fallback to database if metadata is missing (common for manually created users)
+                if (!role) {
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('role')
+                        .eq('id', data.user.id)
+                        .single();
+                    role = profile?.role;
+                }
+
                 if (role === 'mho_admin') {
                     navigate('/admin');
                 } else if (role === 'bhw') {

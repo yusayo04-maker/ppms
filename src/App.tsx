@@ -27,17 +27,48 @@ import ResetPassword from './pages/ResetPassword';
 const ProtectedRoute = ({ children, allowedRole }: { children: React.ReactNode, allowedRole: 'mho_admin' | 'bhw' }) => {
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState<any>(null);
+  const [role, setRole] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
+    const checkRole = async () => {
+      setLoading(true);
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+
+      if (currentSession) {
+        setSession(currentSession);
+        let currentRole = currentSession.user.user_metadata?.role;
+
+        // Fallback to database if metadata is missing
+        if (!currentRole) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', currentSession.user.id)
+            .single();
+          currentRole = profile?.role;
+        }
+        setRole(currentRole);
+      } else {
+        setSession(null);
+        setRole(null);
+      }
       setLoading(false);
-    });
+    };
+
+    checkRole();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      // Skip auth changes during admin account creation
       if (skipAuthChange) return;
-      setSession(session);
+      if (session) {
+        setSession(session);
+        // Refresh role on session change if needed
+        const currentRole = session.user.user_metadata?.role;
+        if (currentRole) setRole(currentRole);
+        else checkRole(); // Re-check DB if metadata still missing
+      } else {
+        setSession(null);
+        setRole(null);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -51,7 +82,6 @@ const ProtectedRoute = ({ children, allowedRole }: { children: React.ReactNode, 
 
   if (!session) return <Navigate to="/login" replace />;
 
-  const role = session.user.user_metadata?.role;
   if (role !== allowedRole) {
     console.warn(`Access denied: User role "${role}" does not match required role "${allowedRole}"`);
     return <Navigate to="/login" replace />;
