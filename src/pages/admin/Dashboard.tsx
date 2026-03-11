@@ -214,7 +214,7 @@ const Dashboard = () => {
                                         }}
                                     />
                                     <Bar dataKey="value" radius={[6, 6, 0, 0]} barSize={40}>
-                                        {demographicsData.map((entry, index) => (
+                                        {demographicsData.map((_, index) => (
                                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                         ))}
                                     </Bar>

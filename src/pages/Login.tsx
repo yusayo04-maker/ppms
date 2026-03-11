@@ -9,8 +9,7 @@ import {
     AlertCircle,
     ShieldCheck,
     Stethoscope,
-    CheckCircle2,
-    X
+    CheckCircle2
 } from 'lucide-react';
 
 const Login = () => {
