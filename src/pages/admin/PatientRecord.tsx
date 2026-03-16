@@ -94,7 +94,8 @@ const PatientRecord = () => {
                 .from('patients')
                 .select(`
                     *,
-                    pregnancy_cycles (*)
+                    pregnancy_cycles (*),
+                    referrals (referred_at)
                 `)
                 .eq('id', id)
                 .single();
@@ -173,6 +174,7 @@ const PatientRecord = () => {
                     ...patient,
                     patientName: `${patient.first_name} ${patient.mi ? patient.mi + ' ' : ''}${patient.last_name}`,
                     status: 'Active',
+                    referredDate: patient.referrals?.[0]?.referred_at,
                     cycles: cycles.reverse() // Newest first
                 };
                 setRecord(formattedRecord);
@@ -1097,7 +1099,7 @@ const PatientRecord = () => {
                                 <div className="space-y-6">
                                     <FormInput label="Purok" value={record.purok || "Not Specified"} disabled={true} />
                                     <FormInput label="Contact Number" value={record.contact_no || "Not Specified"} disabled={true} />
-                                    <FormInput label="Referred Date" value={record.referredDate?.split('T')[0] || "2024-03-20"} disabled={true} />
+                                    <FormInput label="Referred Date" value={record.referredDate?.split('T')[0] || "Not Specified"} disabled={true} />
                                 </div>
                             </div>
 
