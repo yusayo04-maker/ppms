@@ -1096,7 +1096,7 @@ const PatientRecord = () => {
                                 </div>
                                 <div className="space-y-6">
                                     <FormInput label="Purok" value={record.purok || "Not Specified"} disabled={true} />
-                                    <FormInput label="Contact Number" value="+63 912 345 6789" disabled={true} />
+                                    <FormInput label="Contact Number" value={record.contact_no || "Not Specified"} disabled={true} />
                                     <FormInput label="Referred Date" value={record.referredDate?.split('T')[0] || "2024-03-20"} disabled={true} />
                                 </div>
                             </div>
