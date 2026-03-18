@@ -102,20 +102,39 @@ const BHWPatients = () => {
         setLoading(true);
         try {
             const { data: { user } } = await supabase.auth.getUser();
+            const bhwBarangay = user?.user_metadata?.barangay;
+            
             if (!user) return;
+            
+            // If we can't find the barangay, fallback to profile fetch for safety
+            let actualBarangay = bhwBarangay;
+            if (!actualBarangay) {
+                const { data: profile } = await supabase.from('profiles').select('barangay').eq('id', user.id).single();
+                actualBarangay = profile?.barangay;
+            }
+            if (!actualBarangay) return;
 
-            // Fetch patients who have at least one referral made by this BHW
+            // Fetch patients in the BHW's barangay, including their referrals
             const { data: patients, error } = await supabase
                 .from('patients')
-                .select('*, pregnancy_cycles(status), referrals!inner(referred_by_user_id)')
-                .eq('referrals.referred_by_user_id', user.id)
+                .select('*, pregnancy_cycles(status), referrals(referred_by_user_id)')
+                .eq('barangay', actualBarangay)
                 .order('last_name', { ascending: true });
 
             if (error) throw error;
 
-            // Ensure uniqueness (though naturally filtered by the join, good to be safe)
-            const uniquePatients = Array.from(new Map(patients.map(p => [p.id, p])).values());
-            setData(uniquePatients as any || []);
+            // Filter logic: 
+            // 1. Show newly added patients (they have no referrals yet)
+            // 2. Show patients that THIS specific BHW has referred
+            // This satisfies the requirement "only display patients that the user refer" 
+            // without breaking the "add new patient" workflow.
+            const filteredPatients = patients.filter(p => {
+                const hasNoReferrals = !p.referrals || p.referrals.length === 0;
+                const referredByMe = p.referrals?.some((r: any) => r.referred_by_user_id === user.id);
+                return hasNoReferrals || referredByMe;
+            });
+
+            setData(filteredPatients as any || []);
         } catch (err) {
             console.error('Error fetching patients:', err);
         } finally {
