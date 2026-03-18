@@ -30,13 +30,19 @@ const BHWDashboard = () => {
                 const { data: { user } } = await supabase.auth.getUser();
                 if (!user) return;
 
-                const { data: profile } = await supabase
-                    .from('profiles')
-                    .select('barangay')
-                    .eq('id', user.id)
-                    .single();
+                // Priority: Use barangay from user metadata (most reliable)
+                let bhwBarangay = user.user_metadata?.barangay;
 
-                const bhwBarangay = profile?.barangay;
+                if (!bhwBarangay) {
+                    // Fallback: Fetch from profile table
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('barangay')
+                        .eq('id', user.id)
+                        .single();
+                    bhwBarangay = profile?.barangay;
+                }
+
                 if (!bhwBarangay) return;
 
                 // 2. Fetch counts, notes, and chart data filtered by barangay

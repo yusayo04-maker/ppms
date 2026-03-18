@@ -105,16 +105,24 @@ const BHWPatients = () => {
         const fetchBHWProfile = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
-                const { data: profile, error } = await supabase
-                    .from('profiles')
-                    .select('barangay')
-                    .eq('id', user.id)
-                    .single();
+                // Priority: Use barangay from user metadata (most reliable)
+                const metadataBarangay = user.user_metadata?.barangay;
+                
+                if (metadataBarangay) {
+                    setBhwBarangay(metadataBarangay);
+                } else {
+                    // Fallback: Fetch from profiles table
+                    const { data: profile, error } = await supabase
+                        .from('profiles')
+                        .select('barangay')
+                        .eq('id', user.id)
+                        .single();
 
-                if (error) {
-                    console.error('Error fetching BHW profile:', error);
-                } else if (profile) {
-                    setBhwBarangay(profile.barangay);
+                    if (error) {
+                        console.error('Error fetching BHW profile:', error);
+                    } else if (profile) {
+                        setBhwBarangay(profile.barangay);
+                    }
                 }
             }
         };
