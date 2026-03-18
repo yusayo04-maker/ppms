@@ -98,57 +98,32 @@ const BHWPatients = () => {
     const [loading, setLoading] = useState(true);
     const [globalFilter, setGlobalFilter] = useState('');
     const [sorting, setSorting] = useState<SortingState>([]);
-    const [bhwBarangay, setBhwBarangay] = useState<string | null>(null);
-
-    // Fetch BHW's barangay on component mount
-    useEffect(() => {
-        const fetchBHWProfile = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                // Priority: Use barangay from user metadata (most reliable)
-                const metadataBarangay = user.user_metadata?.barangay;
-                
-                if (metadataBarangay) {
-                    setBhwBarangay(metadataBarangay);
-                } else {
-                    // Fallback: Fetch from profiles table
-                    const { data: profile, error } = await supabase
-                        .from('profiles')
-                        .select('barangay')
-                        .eq('id', user.id)
-                        .single();
-
-                    if (error) {
-                        console.error('Error fetching BHW profile:', error);
-                    } else if (profile) {
-                        setBhwBarangay(profile.barangay);
-                    }
-                }
-            }
-        };
-        fetchBHWProfile();
-    }, []);
-
     const fetchPatients = useCallback(async () => {
-        if (!bhwBarangay) return; // Don't fetch if barangay is not yet known
-
         setLoading(true);
         try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            // Fetch patients who have at least one referral made by this BHW
             const { data: patients, error } = await supabase
                 .from('patients')
-                .select('*, pregnancy_cycles(status)')
-                .eq('barangay', bhwBarangay) // Filter by BHW's barangay
+                .select('*, pregnancy_cycles(status), referrals!inner(referred_by_user_id)')
+                .eq('referrals.referred_by_user_id', user.id)
                 .order('last_name', { ascending: true });
 
             if (error) throw error;
-            setData(patients as any || []);
+
+            // Ensure uniqueness (though naturally filtered by the join, good to be safe)
+            const uniquePatients = Array.from(new Map(patients.map(p => [p.id, p])).values());
+            setData(uniquePatients as any || []);
         } catch (err) {
             console.error('Error fetching patients:', err);
         } finally {
             setLoading(false);
         }
-    }, [bhwBarangay]); // Re-run when bhwBarangay changes
+    }, []);
 
+    // Fetch patients on component mount
     useEffect(() => {
         fetchPatients();
     }, [fetchPatients]);

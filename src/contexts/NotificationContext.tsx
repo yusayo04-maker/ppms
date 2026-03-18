@@ -19,23 +19,34 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                 return;
             }
 
-            // Fetch profile for role and barangay
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('role, barangay')
-                .eq('id', user.id)
-                .single();
+            // Priority: Use role and barangay from user metadata (most reliable)
+            let role = user.user_metadata?.role;
+            let barangay = user.user_metadata?.barangay;
 
-            if (!profile) return;
+            if (!role || (role === 'bhw' && !barangay)) {
+                // Fallback: Fetch from profiles table
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('role, barangay')
+                    .eq('id', user.id)
+                    .single();
+                
+                if (profile) {
+                    role = role || profile.role;
+                    barangay = barangay || profile.barangay;
+                }
+            }
+
+            if (!role) return;
 
             let query = supabase
                 .from('notifications')
                 .select('*', { count: 'exact', head: true })
                 .eq('is_dismissed', false);
 
-            if (profile.role === 'bhw') {
+            if (role === 'bhw') {
                 // BHWs see unread lab_overdue notifications for their barangay
-                query = query.eq('barangay_target', profile.barangay).eq('type', 'lab_overdue');
+                query = query.eq('barangay_target', barangay).eq('type', 'lab_overdue');
             }
             // Admins see all unread notifications
 

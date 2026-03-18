@@ -54,17 +54,25 @@ const Notifications = () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
 
-            // Fetch profile for accurate role/barangay
-            const { data: profile, error: profileError } = await supabase
-                .from('profiles')
-                .select('role, barangay')
-                .eq('id', user.id)
-                .single();
+            // Priority: Use role and barangay from user metadata (most reliable)
+            let role = user.user_metadata?.role;
+            let barangay = user.user_metadata?.barangay;
 
-            if (profileError) throw profileError;
+            if (!role || (role === 'bhw' && !barangay)) {
+                // Fallback: Fetch from profile table
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('role, barangay')
+                    .eq('id', user.id)
+                    .single();
+                
+                if (profile) {
+                    role = role || profile.role;
+                    barangay = barangay || profile.barangay;
+                }
+            }
 
-            const role = profile.role;
-            const barangay = profile.barangay;
+            if (!role) return;
 
             setUserContext({ role, barangay: barangay || undefined });
 
